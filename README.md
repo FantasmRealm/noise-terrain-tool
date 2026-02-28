@@ -34,9 +34,10 @@
 ---
 
 ## 📁 项目结构
-noise-terrain-tool
-|-TerrainTool.html#工具主体
-|-README.md#项目说明
+noise-terrain-tool/
+|-- TerrainTool.html    # 工具主体，直接在浏览器中运行
+|-- README.md           # 项目说明文档
+|-- LICENSE             # 许可证文件
 
 ---
 
