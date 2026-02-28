@@ -5,43 +5,187 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Godot地形高度图&模型生成器</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f0f0f0;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .container {
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            min-height: 100vh;
+            position: relative; /* 为GitHub按钮定位做准备 */
+            transition: all 0.3s ease; /* 适配切换动画 */
+        }
+
+        /* ========== 移动端/桌面端切换样式 ========== */
+        body.mobile-mode {
+            flex-direction: column;
+        }
+        body.mobile-mode .sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        body.mobile-mode .main-container {
+            margin-left: 0;
+            max-width: 100%;
+            padding: 10px;
+        }
+        body.mobile-mode .content-wrapper {
+            max-height: calc(100vh - 120px);
+        }
+        body.mobile-mode .tab {
+            text-align: center;
+        }
+        body.mobile-mode .github-btn {
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+        }
+
+        /* 切换模式浮动按钮 */
+        .mode-toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #673AB7, #512DA8);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(103, 58, 183, 0.4);
+            transition: all 0.3s ease;
+            z-index: 30;
+            border: none;
+            font-size: 20px;
+        }
+        .mode-toggle-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 18px rgba(103, 58, 183, 0.5);
+        }
+        .mode-toggle-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        /* ========== 左侧侧边栏优化 ========== */
+        .sidebar {
+            width: 220px;
+            background: linear-gradient(180deg, #2c3e50, #1a252f); /* 渐变背景增加层次感 */
+            color: white;
+            padding: 20px 0;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.15); /* 侧边阴影增加立体感 */
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        .sidebar h1 {
+            font-size: 18px;
+            text-align: center;
+            padding: 0 15px 20px;
+            border-bottom: 1px solid #444;
+            margin-bottom: 20px;
+            color: #ecf0f1;
+        }
+        
+        /* 切换按钮优化 - 增加层次感 */
+        .tab {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            color: #ecf0f1;
+            text-align: left;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        /* 按钮hover效果 */
+        .tab:hover {
+            background: #34495e;
+            transform: translateX(4px); /* 轻微右移增加动感 */
+        }
+        /* 激活按钮样式 */
+        .tab.active {
+            background: linear-gradient(90deg, #4CAF50, #43a047); /* 渐变背景 */
+            color: white;
+            border-left: 4px solid #2ecc71;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.2); /* 内阴影增加按压感 */
+        }
+        /* 按钮伪元素增加层次感 */
+        .tab::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.05);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        .tab:hover::after {
+            transform: translateX(0);
+        }
+
+        /* ========== GitHub按钮 - 左下角 ========== */
+        .github-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 20px;
+            background: linear-gradient(135deg, #333, #444);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 20;
+            width: 180px;
+            justify-content: center;
+        }
+        .github-btn:hover {
+            background: linear-gradient(135deg, #444, #555);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+        }
+        .github-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: white;
+        }
+
+        /* ========== 右侧主内容区 ========== */
+        .main-container {
+            flex: 1;
+            margin-left: 220px;
+            padding: 20px;
+            max-width: calc(100% - 220px);
+            transition: all 0.3s ease;
+        }
+        .content-wrapper {
             background: white;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            background: #eee;
-            border: none;
-            font-size: 16px;
-            border-radius: 5px 5px 0 0;
-            margin-right: 5px;
-        }
-        .tab.active {
-            background: #4CAF50;
-            color: white;
-        }
-        .tab-content {
-            display: none;
-            padding: 20px 0;
-        }
-        .tab-content.active {
-            display: block;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
         }
         .controls {
             margin-bottom: 20px;
@@ -63,39 +207,60 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
         }
         button {
-            background-color: #4CAF50;
+            background: linear-gradient(135deg, #4CAF50, #43a047);
             color: white;
             border: none;
             cursor: pointer;
             padding: 12px;
             font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(76, 175, 80, 0.2);
         }
         button:hover {
-            background-color: #45a049;
+            background: linear-gradient(135deg, #388e3c, #43a047);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
         }
         #canvas-container {
             text-align: center;
             margin-top: 20px;
+            max-height: 400px;
+            overflow: hidden;
         }
         canvas {
             border: 1px solid #ddd;
             max-width: 100%;
+            max-height: 400px;
             height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         .download-btn {
-            background-color: #2196F3;
+            background: linear-gradient(135deg, #2196F3, #1976d2);
+            box-shadow: 0 3px 6px rgba(33, 150, 243, 0.2);
             margin-top: 10px;
         }
         .download-btn:hover {
-            background-color: #0b7dda;
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            box-shadow: 0 6px 12px rgba(33, 150, 243, 0.3);
         }
         .tips {
             margin-top: 20px;
             padding: 10px;
             background-color: #e7f3ff;
             border-left: 4px solid #2196F3;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         #image-upload {
             margin: 10px 0;
@@ -103,6 +268,11 @@
             border: 2px dashed #ddd;
             border-radius: 5px;
             text-align: center;
+            transition: all 0.3s ease;
+        }
+        #image-upload:hover {
+            border-color: #4CAF50;
+            background-color: #f9fef9;
         }
         #model-format {
             margin: 10px 0;
@@ -112,98 +282,134 @@
             font-weight: bold;
             margin-top: 10px;
         }
+        .tab-content {
+            display: none;
+            padding: 10px 0;
+            animation: fadeIn 0.4s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式适配（备用） */
+        @media (max-width: 768px) {
+            .mode-toggle-btn {
+                bottom: 90px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Godot地形高度图&模型生成器</h1>
-        
-        <!-- 标签页 -->
-        <div class="tabs">
-            <button class="tab active" onclick="openTab('generator')">高度图生成</button>
-            <button class="tab" onclick="openTab('modeler')">模型生成（识别高度图）</button>
-        </div>
+    <!-- 左侧侧边栏 -->
+    <div class="sidebar">
+        <h1>Godot地形生成器</h1>
+        <button class="tab active" onclick="openTab('generator')">高度图生成</button>
+        <button class="tab" onclick="openTab('modeler')">模型生成（识别高度图）</button>
+    </div>
 
-        <!-- 高度图生成标签页 -->
-        <div id="generator" class="tab-content active">
-            <div class="controls">
-                <div class="control-group">
-                    <label for="width">图片宽度（像素）</label>
-                    <input type="number" id="width" value="512" min="64" max="2048">
+    <!-- GitHub跳转按钮 -->
+    <a href="https://github.com/FantasmRealm/noise-terrain-tool" target="_blank" class="github-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        访问GitHub仓库
+    </a>
+
+    <!-- 移动端/桌面端切换按钮 -->
+    <button class="mode-toggle-btn" id="modeToggleBtn" title="切换移动端/桌面端">📱</button>
+
+    <!-- 右侧主内容区 -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- 高度图生成标签页 -->
+            <div id="generator" class="tab-content active">
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="width">图片宽度（像素）</label>
+                        <input type="number" id="width" value="512" min="64" max="2048">
+                    </div>
+                    <div class="control-group">
+                        <label for="height">图片高度（像素）</label>
+                        <input type="number" id="height" value="512" min="64" max="2048">
+                    </div>
+                    <div class="control-group">
+                        <label for="scale">噪波缩放（越小越精细）</label>
+                        <input type="number" id="scale" value="20" min="1" max="100" step="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label for="octaves">细节层数（越多越复杂）</label>
+                        <input type="number" id="octaves" value="4" min="1" max="8">
+                    </div>
+                    <button id="generate-btn">生成高度图</button>
                 </div>
-                <div class="control-group">
-                    <label for="height">图片高度（像素）</label>
-                    <input type="number" id="height" value="512" min="64" max="2048">
+
+                <div id="canvas-container">
+                    <canvas id="heightmap-canvas"></canvas>
+                    <br>
+                    <button id="download-heightmap-btn" class="download-btn" style="display: none;">下载PNG高度图</button>
                 </div>
-                <div class="control-group">
-                    <label for="scale">噪波缩放（越小越精细）</label>
-                    <input type="number" id="scale" value="20" min="1" max="100" step="0.5">
-                </div>
-                <div class="control-group">
-                    <label for="octaves">细节层数（越多越复杂）</label>
-                    <input type="number" id="octaves" value="4" min="1" max="8">
-                </div>
-                <button id="generate-btn">生成高度图</button>
             </div>
 
-            <div id="canvas-container">
-                <canvas id="heightmap-canvas"></canvas>
-                <br>
-                <button id="download-heightmap-btn" class="download-btn" style="display: none;">下载PNG高度图</button>
-            </div>
-        </div>
-
-        <!-- 模型生成标签页 -->
-        <div id="modeler" class="tab-content">
-            <div class="control-group">
-                <label>上传高度图（黑白/灰度PNG）</label>
-                <div id="image-upload">
-                    <input type="file" id="heightmap-upload" accept="image/png,image/jpg,image/jpeg">
-                    <p id="upload-status">未上传图片</p>
-                </div>
-            </div>
-
-            <div class="controls">
+            <!-- 模型生成标签页 -->
+            <div id="modeler" class="tab-content">
                 <div class="control-group">
-                    <label for="height-scale">地形高度缩放（值越大越高）</label>
-                    <input type="number" id="height-scale" value="20" min="1" max="200" step="0.5">
+                    <label>上传高度图（黑白/灰度PNG）</label>
+                    <div id="image-upload">
+                        <input type="file" id="heightmap-upload" accept="image/png,image/jpg,image/jpeg">
+                        <p id="upload-status">未上传图片</p>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label for="mesh-scale">平面缩放（X/Z轴）</label>
-                    <input type="number" id="mesh-scale" value="0.1" min="0.01" max="1" step="0.01">
+
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="height-scale">地形高度缩放（值越大越高）</label>
+                        <input type="number" id="height-scale" value="20" min="1" max="200" step="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label for="mesh-scale">平面缩放（X/Z轴）</label>
+                        <input type="number" id="mesh-scale" value="0.1" min="0.01" max="1" step="0.01">
+                    </div>
+                    <div class="control-group">
+                        <label for="model-format">导出模型格式</label>
+                        <select id="model-format">
+                            <option value="obj">OBJ（通用，推荐）</option>
+                            <option value="glb">GLB（Godot优化，带材质）</option>
+                            <option value="gltf">glTF（JSON格式，跨引擎）</option>
+                            <option value="fbx">FBX（Autodesk格式，Unity/3dsMax）</option>
+                            <option value="dae">DAE/Collada（XML格式，通用）</option>
+                        </select>
+                    </div>
+                    <button id="generate-model-btn" disabled>生成并下载3D模型</button>
                 </div>
-                <div class="control-group">
-                    <label for="model-format">导出模型格式</label>
-                    <select id="model-format">
-                        <option value="obj">OBJ（通用，推荐）</option>
-                        <option value="glb">GLB（Godot优化，带材质）</option>
-                        <option value="stl">STL（3D打印）</option>
-                    </select>
+
+                <div id="model-preview-container">
+                    <canvas id="model-preview-canvas"></canvas>
+                    <div id="loading-indicator" class="loading" style="display: none;">正在生成模型，请稍候...</div>
                 </div>
-                <button id="generate-model-btn" disabled>生成并下载3D模型</button>
             </div>
 
-            <div id="model-preview-container">
-                <canvas id="model-preview-canvas"></canvas>
-                <div id="loading-indicator" class="loading" style="display: none;">正在生成模型，请稍候...</div>
+            <div class="tips">
+                <h3>核心规则 & Godot使用说明</h3>
+                <ul>
+                    <li>✅ 白色区域（灰度255）= 最高地形（草地绿），黑色区域（灰度0）= 最低地形（土地棕）</li>
+                    <li>✅ 生成的模型可直接拖拽到Godot等游戏引擎，会自动识别网格体</li>
+                    <li>✅ 推荐尺寸：256x256（平衡性能和细节），高度缩放20-50（地形起伏适中）</li>
+                    <li>❌ 避免使用2048x2048超大尺寸，会导致模型面数过多（百万级），Godot加载卡顿</li>
+                </ul>
             </div>
-        </div>
-
-        <div class="tips">
-            <h3>核心规则 & Godot使用说明</h3>
-            <ul>
-                <li>✅ 白色区域（灰度255）= 最高地形（草地绿），黑色区域（灰度0）= 最低地形（土地棕）</li>
-                <li>✅ 生成的模型可直接拖拽到Godot场景，MeshInstance3D会自动识别</li>
-                <li>✅ 推荐尺寸：256x256（平衡性能和细节），高度缩放20-50（地形起伏适中）</li>
-                <li>❌ 避免使用2048x2048超大尺寸，会导致模型面数过多（百万级），Godot加载卡顿</li>
-                <li>💡 GLB格式自带渐变材质，OBJ/STL需在Godot中手动添加材质</li>
-            </ul>
         </div>
     </div>
 
-    <!-- 引入Three.js和GLB导出依赖 -->
+    <!-- 引入Three.js和各类导出依赖 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/exporters/GLBExporter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/exporters/GLTFExporter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/exporters/FBXExporter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/exporters/ColladaExporter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/utils/BufferGeometryUtils.js"></script>
 
     <script>
@@ -220,6 +426,46 @@
             event.currentTarget.classList.add("active");
             document.getElementById(tabName).classList.add("active");
         }
+
+        // ========== 移动端/桌面端切换功能 ==========
+        const modeToggleBtn = document.getElementById('modeToggleBtn');
+        let isMobileMode = false;
+
+        // 初始化：检测屏幕尺寸自动适配
+        function initMode() {
+            if (window.innerWidth <= 768) {
+                toggleMode();
+            }
+        }
+
+        // 切换模式核心函数
+        function toggleMode() {
+            isMobileMode = !isMobileMode;
+            document.body.classList.toggle('mobile-mode', isMobileMode);
+            
+            // 更新按钮图标和提示
+            if (isMobileMode) {
+                modeToggleBtn.innerHTML = '🖥️';
+                modeToggleBtn.title = '切换到桌面端';
+            } else {
+                modeToggleBtn.innerHTML = '📱';
+                modeToggleBtn.title = '切换到移动端';
+            }
+        }
+
+        // 绑定切换事件
+        modeToggleBtn.addEventListener('click', toggleMode);
+        // 窗口大小变化时自动适配
+        window.addEventListener('resize', function() {
+            if (window.innerWidth <= 768 && !isMobileMode) {
+                toggleMode();
+            } else if (window.innerWidth > 768 && isMobileMode) {
+                toggleMode();
+            }
+        });
+
+        // 页面加载时初始化模式
+        window.addEventListener('load', initMode);
 
         // ===================== 1. 高度图生成核心（优化命名） =====================
         class SimplePerlin {
@@ -339,7 +585,7 @@
         downloadHeightmapBtn.addEventListener('click', downloadHeightmap);
         generateHeightmap(); // 初始生成
 
-        // ===================== 2. 模型生成核心（添加渐变材质） =====================
+        // ===================== 2. 多格式模型生成核心 =====================
         const heightmapUpload = document.getElementById('heightmap-upload');
         const uploadStatus = document.getElementById('upload-status');
         const generateModelBtn = document.getElementById('generate-model-btn');
@@ -376,265 +622,231 @@
             reader.readAsDataURL(file);
         });
 
-        // 生成OBJ模型（白色=高，黑色=低）
+        // 生成基础网格（供各格式导出使用）
+        function createTerrainMesh(width, height, heightData, heightScale, meshScale) {
+            // 创建平面几何体（分段数=像素数-1，保证每个像素对应一个顶点）
+            const geometry = new THREE.PlaneGeometry(
+                width * meshScale, 
+                height * meshScale, 
+                width - 1, 
+                height - 1
+            );
+
+            // 调整顶点高度
+            const positions = geometry.attributes.position;
+            const colors = [];
+            const color = new THREE.Color();
+
+            for (let i = 0; i < positions.count; i++) {
+                // 计算对应图片像素坐标
+                const vertexIndex = i;
+                const x = vertexIndex % width;
+                const z = Math.floor(vertexIndex / width);
+                const grayValue = heightData[z * width + x];
+                const yHeight = (grayValue / 255) * heightScale;
+
+                // 设置Y轴高度
+                positions.setY(i, yHeight);
+
+                // 生成渐变颜色：低=棕色，高=绿色
+                const heightRatio = grayValue / 255;
+                color.setRGB(
+                    0.2 + heightRatio * 0.1, // R: 0.2~0.3
+                    0.4 + heightRatio * 0.5, // G: 0.4~0.9
+                    0.1 + heightRatio * 0.1  // B: 0.1~0.2
+                );
+                colors.push(color.r, color.g, color.b);
+            }
+
+            // 添加颜色属性
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.computeVertexNormals();
+
+            // 创建材质
+            const material = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                roughness: 0.8,
+                metalness: 0.1
+            });
+
+            // 创建网格
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.rotation.x = -Math.PI / 2; // 旋转到正确方向
+            mesh.position.set(0, 0, 0);
+            
+            return mesh;
+        }
+
+        // 1. OBJ格式导出（通用文本格式）
         function generateOBJ(width, height, heightData, heightScale, meshScale) {
-            let objContent = `# Godot Terrain Heightmap Model\n# White = High (Grass), Black = Low (Dirt)\n`;
+            let objContent = `# Godot Terrain Heightmap Model\n# Generated by noise-terrain-tool\n# White = High (Grass), Black = Low (Dirt)\n`;
             let vertexCount = 0;
 
-            // 1. 生成顶点（V：x, y, z）
+            // 生成顶点（V：x, y, z）
             for (let z = 0; z < height; z++) {
                 for (let x = 0; x < width; x++) {
-                    const grayValue = heightData[z * width + x]; // 0-255
-                    const yHeight = (grayValue / 255) * heightScale; // 白色=最高，黑色=0（平地）
+                    const grayValue = heightData[z * width + x];
+                    const yHeight = (grayValue / 255) * heightScale;
                     
-                    // 平面坐标居中，缩放适配Godot
                     const worldX = (x - width/2) * meshScale;
                     const worldZ = (z - height/2) * meshScale;
                     
-                    // 添加顶点（保留4位小数，精简文件）
                     objContent += `v ${worldX.toFixed(4)} ${yHeight.toFixed(4)} ${worldZ.toFixed(4)}\n`;
                     vertexCount++;
                 }
             }
 
-            // 2. 生成面（F：三角面，顺时针）
+            // 生成面（F：三角面，顺时针）
             objContent += `# Faces (Triangles)\n`;
             for (let z = 0; z < height - 1; z++) {
                 for (let x = 0; x < width - 1; x++) {
-                    // 计算四个顶点的索引（OBJ索引从1开始）
                     const v1 = z * width + x + 1;
                     const v2 = (z + 1) * width + x + 1;
                     const v3 = (z + 1) * width + (x + 1) + 1;
                     const v4 = z * width + (x + 1) + 1;
                     
-                    // 两个三角面组成一个四边形（保证法线正确）
                     objContent += `f ${v1} ${v2} ${v3}\n`;
                     objContent += `f ${v1} ${v3} ${v4}\n`;
                 }
             }
 
-            return objContent;
+            return new Blob([objContent], { type: 'text/plain' });
         }
 
-        // 生成STL模型
-        function generateSTL(width, height, heightData, heightScale, meshScale) {
-            let stlContent = `solid GodotTerrain\n# White = High (Grass), Black = Low (Dirt)\n`;
-
-            // 计算三角面法线
-            function calculateNormal(p1, p2, p3) {
-                const v1 = { x: p2.x - p1.x, y: p2.y - p1.y, z: p2.z - p1.z };
-                const v2 = { x: p3.x - p1.x, y: p3.y - p1.y, z: p3.z - p1.z };
-                // 叉乘求法线
-                const normal = {
-                    x: v1.y * v2.z - v1.z * v2.y,
-                    y: v1.z * v2.x - v1.x * v2.z,
-                    z: v1.x * v2.y - v1.y * v2.x
-                };
-                // 归一化
-                const len = Math.sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
-                return len === 0 ? {x:0,y:1,z:0} : {
-                    x: (normal.x/len).toFixed(4),
-                    y: (normal.y/len).toFixed(4),
-                    z: (normal.z/len).toFixed(4)
-                };
-            }
-
-            // 生成三角面
-            for (let z = 0; z < height - 1; z++) {
-                for (let x = 0; x < width - 1; x++) {
-                    // 获取四个顶点的3D坐标
-                    const getPoint = (px, pz) => {
-                        const gray = heightData[pz * width + px];
-                        return {
-                            x: ((px - width/2) * meshScale).toFixed(4),
-                            y: ((gray/255)*heightScale).toFixed(4),
-                            z: ((pz - height/2) * meshScale).toFixed(4)
-                        };
-                    };
-
-                    const p1 = getPoint(x, z);
-                    const p2 = getPoint(x, z+1);
-                    const p3 = getPoint(x+1, z+1);
-                    const p4 = getPoint(x+1, z);
-
-                    // 第一个三角面
-                    const n1 = calculateNormal(p1, p2, p3);
-                    stlContent += `  facet normal ${n1.x} ${n1.y} ${n1.z}\n`;
-                    stlContent += `    outer loop\n`;
-                    stlContent += `      vertex ${p1.x} ${p1.y} ${p1.z}\n`;
-                    stlContent += `      vertex ${p2.x} ${p2.y} ${p2.z}\n`;
-                    stlContent += `      vertex ${p3.x} ${p3.y} ${p3.z}\n`;
-                    stlContent += `    endloop\n`;
-                    stlContent += `  endfacet\n`;
-
-                    // 第二个三角面
-                    const n2 = calculateNormal(p1, p3, p4);
-                    stlContent += `  facet normal ${n2.x} ${n2.y} ${n2.z}\n`;
-                    stlContent += `    outer loop\n`;
-                    stlContent += `      vertex ${p1.x} ${p1.y} ${p1.z}\n`;
-                    stlContent += `      vertex ${p3.x} ${p3.y} ${p3.z}\n`;
-                    stlContent += `      vertex ${p4.x} ${p4.y} ${p4.z}\n`;
-                    stlContent += `    endloop\n`;
-                    stlContent += `  endfacet\n`;
-                }
-            }
-
-            stlContent += `endsolid GodotTerrain\n`;
-            return stlContent;
-        }
-
-        // 生成GLB模型（带高度渐变材质：高处绿/低处棕）
-        function generateGLB(width, height, heightData, heightScale, meshScale) {
+        // 2. GLB格式导出（二进制glTF，带材质）
+        function generateGLB(mesh) {
             return new Promise((resolve) => {
-                // 创建平面几何体（分段数=像素数-1，保证每个像素对应一个顶点）
-                const geometry = new THREE.PlaneGeometry(
-                    width * meshScale, 
-                    height * meshScale, 
-                    width - 1, 
-                    height - 1
-                );
-
-                // 获取顶点位置数组
-                const positions = geometry.attributes.position;
-                // 创建颜色属性数组
-                const colors = [];
-                
-                // 定义渐变颜色：低处（黑色）= 土地棕 #8B4513，高处（白色）= 草地绿 #4CAF50
-                const dirtColor = new THREE.Color(0x8B4513); // 土地棕
-                const grassColor = new THREE.Color(0x4CAF50); // 草地绿
-
-                // 核心：修改每个顶点的Y高度 + 设置渐变颜色
-                for (let i = 0; i < positions.count; i++) {
-                    // 计算当前顶点对应的图片像素坐标
-                    const x = Math.floor(i % width);
-                    const z = Math.floor(i / width);
-                    
-                    if (z < height && x < width) {
-                        const grayValue = heightData[z * width + x];
-                        const heightRatio = grayValue / 255; // 0-1的高度比例
-                        const yHeight = heightRatio * heightScale;
-                        
-                        // 设置顶点高度
-                        positions.setY(i, yHeight);
-                        
-                        // 计算渐变颜色：根据高度比例混合棕/绿
-                        const vertexColor = new THREE.Color();
-                        vertexColor.lerpColors(dirtColor, grassColor, heightRatio);
-                        colors.push(vertexColor.r, vertexColor.g, vertexColor.b);
-                    }
-                }
-
-                // 添加颜色属性到几何体
-                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-                geometry.attributes.color.needsUpdate = true;
-
-                // 更新几何体数据
-                positions.needsUpdate = true;
-                geometry.computeVertexNormals(); // 计算法线，保证光照正确
-                geometry.computeBoundingBox();
-
-                // 创建带顶点颜色的材质
-                const material = new THREE.MeshStandardMaterial({ 
-                    vertexColors: true, // 启用顶点颜色
-                    roughness: 0.8,      // 粗糙感，更贴近真实地形
-                    metalness: 0.1       // 低金属度
-                });
-                
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.rotation.x = -Math.PI / 2; // 旋转平面，让Y轴朝上（适配Godot坐标系）
-
-                // 导出为GLB
                 const exporter = new THREE.GLBExporter();
-                exporter.parse(mesh, function(glbBuffer) {
-                    resolve(new Blob([glbBuffer], { type: 'model/gltf-binary' }));
+                exporter.parse(mesh, (glb) => {
+                    const blob = new Blob([glb], { type: 'model/gltf-binary' });
+                    resolve(blob);
+                }, { binary: true });
+            });
+        }
+
+        // 3. glTF格式导出（JSON格式，开源标准）
+        function generateGLTF(mesh) {
+            return new Promise((resolve) => {
+                const exporter = new THREE.GLTFExporter();
+                exporter.parse(mesh, (gltf) => {
+                    const json = JSON.stringify(gltf, null, 2);
+                    const blob = new Blob([json], { type: 'application/json' });
+                    resolve(blob);
                 }, { 
-                    binary: true,
                     trs: false,
-                    onlyVisible: true
+                    onlyVisible: true,
+                    truncateDrawRange: true,
+                    embedImages: true,
+                    binary: false
                 });
             });
         }
 
-        // 下载文件通用函数
-        function downloadFile(content, fileName, mimeType) {
-            const blob = typeof content === 'string' ? new Blob([content], { type: mimeType }) : content;
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            link.click();
-            URL.revokeObjectURL(url); // 释放内存
+        // 4. FBX格式导出（Autodesk格式，适配Unity/3dsMax）
+        function generateFBX(mesh) {
+            return new Promise((resolve) => {
+                const exporter = new THREE.FBXExporter();
+                const fbxData = exporter.parse(mesh);
+                const blob = new Blob([fbxData], { type: 'application/octet-stream' });
+                resolve(blob);
+            });
         }
 
-        // 生成模型主函数（优化命名+自动下载）
-        async function generateAndDownloadModel() {
+        // 5. DAE/Collada格式导出（XML通用格式）
+        function generateDAE(mesh) {
+            return new Promise((resolve) => {
+                const exporter = new THREE.ColladaExporter();
+                const daeData = exporter.parse(mesh);
+                const blob = new Blob([daeData], { type: 'application/xml' });
+                resolve(blob);
+            });
+        }
+
+        // 模型生成主函数
+        generateModelBtn.addEventListener('click', async function() {
             if (!uploadedImage) return;
-            
-            // 显示加载状态
+
             loadingIndicator.style.display = 'block';
             generateModelBtn.disabled = true;
-            uploadStatus.textContent = '🔄 正在解析高度图并生成模型...';
 
             try {
-                // 获取参数（优化默认值）
+                // 获取参数
                 const heightScale = parseFloat(document.getElementById('height-scale').value) || 20;
                 const meshScale = parseFloat(document.getElementById('mesh-scale').value) || 0.1;
-                const format = document.getElementById('model-format').value;
-                const width = uploadedImage.width;
-                const height = uploadedImage.height;
+                const modelFormat = document.getElementById('model-format').value;
 
-                // 1. 绘制图片到临时画布，提取灰度数据
+                // 创建画布获取像素数据
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
-                tempCanvas.width = width;
-                tempCanvas.height = height;
+                tempCanvas.width = uploadedImage.width;
+                tempCanvas.height = uploadedImage.height;
                 tempCtx.drawImage(uploadedImage, 0, 0);
-                const imageData = tempCtx.getImageData(0, 0, width, height);
-                const pixelData = imageData.data;
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imageData.data;
 
-                // 2. 转换为灰度数组（0-255）
+                // 提取灰度数据
                 const heightData = [];
-                for (let i = 0; i < pixelData.length; i += 4) {
-                    // 灰度计算公式：R*0.299 + G*0.587 + B*0.114（标准灰度转换）
-                    const gray = Math.floor(pixelData[i]*0.299 + pixelData[i+1]*0.587 + pixelData[i+2]*0.114);
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    const gray = Math.floor(0.299 * r + 0.587 * g + 0.114 * b);
                     heightData.push(gray);
                 }
 
-                // 3. 根据格式生成模型并自动下载（优化模型命名）
+                // 生成对应格式模型
+                let blob, fileName;
                 const timestamp = Date.now();
-                let fileName, mimeType, modelContent;
+                const size = `${tempCanvas.width}x${tempCanvas.height}`;
 
-                if (format === 'obj') {
-                    fileName = `地形模型_${width}x${height}_OBJ_${timestamp}.obj`;
-                    mimeType = 'text/plain';
-                    modelContent = generateOBJ(width, height, heightData, heightScale, meshScale);
-                } else if (format === 'stl') {
-                    fileName = `地形模型_${width}x${height}_STL_${timestamp}.stl`;
-                    mimeType = 'application/sla';
-                    modelContent = generateSTL(width, height, heightData, heightScale, meshScale);
-                } else if (format === 'glb') {
-                    fileName = `地形模型_${width}x${height}_GLB_渐变材质_${timestamp}.glb`;
-                    mimeType = 'model/gltf-binary';
-                    modelContent = await generateGLB(width, height, heightData, heightScale, meshScale);
+                switch(modelFormat) {
+                    case 'obj':
+                        blob = generateOBJ(tempCanvas.width, tempCanvas.height, heightData, heightScale, meshScale);
+                        fileName = `地形模型_${size}_${timestamp}.obj`;
+                        break;
+                        
+                    case 'glb':
+                        const meshGLB = createTerrainMesh(tempCanvas.width, tempCanvas.height, heightData, heightScale, meshScale);
+                        blob = await generateGLB(meshGLB);
+                        fileName = `地形模型_${size}_${timestamp}.glb`;
+                        break;
+                        
+                    case 'gltf':
+                        const meshGLTF = createTerrainMesh(tempCanvas.width, tempCanvas.height, heightData, heightScale, meshScale);
+                        blob = await generateGLTF(meshGLTF);
+                        fileName = `地形模型_${size}_${timestamp}.gltf`;
+                        break;
+                        
+                    case 'fbx':
+                        const meshFBX = createTerrainMesh(tempCanvas.width, tempCanvas.height, heightData, heightScale, meshScale);
+                        blob = await generateFBX(meshFBX);
+                        fileName = `地形模型_${size}_${timestamp}.fbx`;
+                        break;
+                        
+                    case 'dae':
+                        const meshDAE = createTerrainMesh(tempCanvas.width, tempCanvas.height, heightData, heightScale, meshScale);
+                        blob = await generateDAE(meshDAE);
+                        fileName = `地形模型_${size}_${timestamp}.dae`;
+                        break;
                 }
 
-                // 4. 自动下载
-                downloadFile(modelContent, fileName, mimeType);
+                // 下载文件
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                link.click();
+                URL.revokeObjectURL(link.href);
 
-                // 5. 更新状态
-                uploadStatus.textContent = `✅ 模型生成并下载完成！格式：${format}，顶点数：${width*height}，高度缩放：${heightScale}`;
+                uploadStatus.textContent = `✅ 模型生成成功：${fileName}`;
 
             } catch (error) {
-                uploadStatus.textContent = `❌ 生成失败：${error.message}（建议使用256x256尺寸重试）`;
+                uploadStatus.textContent = `❌ 生成失败：${error.message}`;
+                console.error('模型生成错误：', error);
             } finally {
-                // 隐藏加载状态
                 loadingIndicator.style.display = 'none';
                 generateModelBtn.disabled = false;
             }
-        }
-
-        // 绑定模型生成按钮事件
-        generateModelBtn.addEventListener('click', generateAndDownloadModel);
+        });
     </script>
 </body>
 </html>
